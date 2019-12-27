@@ -1,3 +1,4 @@
+import java.nio.file.DirectoryNotEmptyException;
 import java.util.*;
 import org.junit.*;
 import static org.junit.Assert.*;
@@ -10,7 +11,8 @@ public class FileSystemTest {
     // paths to use
     private String[] validPath = {"root", "name"};
     private String[] invalidPath = {"notRoot", "name"};
-    private String[] longPath = {"root", "dir1", "dir2", "name"};
+    private String[] longDirPath = {"root", "dir1", "dir2"};
+    private String[] longFilePath = {"root", "dir1", "dir2", "name"};
 
     // test method: constructor
 
@@ -92,7 +94,7 @@ public class FileSystemTest {
 
     @Test
     public void allDirsAreCreated() throws OutOfSpaceException, BadFileNameException {
-        fileSystem.file(longPath, 1);
+        fileSystem.file(longFilePath, 1);
         String[] file = null;
         String[][] disk = fileSystem.disk();
         for (String[] block : disk) {
@@ -101,7 +103,7 @@ public class FileSystemTest {
                 break;
             }
         }
-        assertArrayEquals(longPath, file);
+        assertArrayEquals(longFilePath, file);
     }
 
     @Test(expected = BadFileNameException.class)
@@ -149,26 +151,95 @@ public class FileSystemTest {
     }
 
     // test method: lsdir()
+
     @Test
     public void checkIsDir() throws OutOfSpaceException, BadFileNameException {
-        String[] dirPath = Arrays.copyOfRange(longPath, 0, longPath.length-1);
-        String[] names = fileSystem.lsdir(dirPath);
+        String[] names = fileSystem.lsdir(longDirPath);
         assertNull(names);
 
         // add two files and a sub dir
         String[] expectedNames = {"file1", "file2", "subDir"};
         for (String name : expectedNames) {
-            String[] path = new String[dirPath.length+1];
-            for (int i = 0; i < dirPath.length; i++)
-                path[i] = dirPath[i];
+            String[] path = new String[longDirPath.length+1];
+            for (int i = 0; i < longDirPath.length; i++)
+                path[i] = longDirPath[i];
             path[path.length-1] = name;
             if (name.equals("subDir"))
                 fileSystem.dir(path);
             else
                 fileSystem.file(path, 1);
         }
-        names = fileSystem.lsdir(dirPath);
+        names = fileSystem.lsdir(longDirPath);
         assertArrayEquals(expectedNames, names);
     }
 
+    // test method: rmfile()
+
+    @Test
+    public void removeFileThatDoesntExist() {
+        fileSystem.rmfile(validPath);
+    }
+
+    @Test
+    public void removeFileThatExists() throws OutOfSpaceException, BadFileNameException {
+        fileSystem.file(validPath, 1);
+        fileSystem.rmfile(validPath);
+        String[][] disk = fileSystem.disk();
+        String[] file = null;
+        for (String[] block : disk) {
+            if (block != null) {
+                file = block;
+                break;
+            }
+        }
+        assertNull(file);
+    }
+
+    // test method: rmdir()
+
+    @Test
+    public void removeDirThatDoesntExist() throws DirectoryNotEmptyException {
+        fileSystem.rmdir(longDirPath);
+    }
+
+    @Test
+    public void removeEmptyDir() throws DirectoryNotEmptyException, BadFileNameException {
+        fileSystem.dir(longDirPath);
+        fileSystem.rmdir(longDirPath);
+        String[][] disk = fileSystem.disk();
+        String[] file = null;
+        for (String[] block : disk) {
+            if (block != null) {
+                file = block;
+                break;
+            }
+        }
+        assertNull(file);
+    }
+
+    @Test(expected = DirectoryNotEmptyException.class)
+    public void removeNotEmptyDir() throws DirectoryNotEmptyException, BadFileNameException {
+        fileSystem.dir(longFilePath);
+        fileSystem.rmdir(longDirPath);
+    }
+
+    // test method: FileExists()
+
+    @Test
+    public void fileExists() throws BadFileNameException, OutOfSpaceException {
+        fileSystem.file(validPath, 1);
+        Leaf file = fileSystem.FileExists(validPath);
+        String expectedName = validPath[validPath.length-1];
+        assertEquals(expectedName, file.name);
+    }
+
+    // test method: DirExists()
+
+    @Test
+    public void dirExists() throws BadFileNameException, OutOfSpaceException {
+        fileSystem.dir(longDirPath);
+        Tree dir = fileSystem.DirExists(longDirPath);
+        String expectedName = longDirPath[longDirPath.length-1];
+        assertEquals(expectedName, dir.name);
+    }
 }
