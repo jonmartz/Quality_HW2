@@ -5,8 +5,8 @@ import static org.junit.Assert.*;
 
 public class FileSystemTest {
 
-    private int diskSpace = 10;
-    private FileSystem fileSystem = new FileSystem(diskSpace);
+    private int diskSize = 10;
+    private FileSystem fileSystem = new FileSystem(diskSize);
 
     // paths to use
     private String[] validPath = {"root", "name"};
@@ -18,7 +18,7 @@ public class FileSystemTest {
 
     @Test
     public void checkConstructor() {
-        assertEquals(diskSpace, fileSystem.disk().length);
+        assertEquals(diskSize, fileSystem.disk().length);
     }
 
     // test method: dir()
@@ -44,17 +44,21 @@ public class FileSystemTest {
 
     @Test
     public void checkDisk() throws BadFileNameException, OutOfSpaceException {
+        // check that disk is empty at first
         String[][] disk = fileSystem.disk();
-        String[] file = null;
-        for (String[] block : disk) {
-            if (block != null) {
-                file = block;
-                break;
-            }
-        }
-        assertNull(file);
+        String[][] expectedDisk = new String[diskSize][];
+        assertArrayEquals(expectedDisk, disk);
+//        String[] file = null;
+//        for (String[] block : disk) {
+//            if (block != null) {
+//                file = block;
+//                break;
+//            }
+//        }
+//        assertNull(file);
 
-        int expectedFileSize = diskSpace-1;
+        // check the disk contains something after an allocation
+        int expectedFileSize = diskSize -1;
         fileSystem.file(validPath, expectedFileSize);
         disk = fileSystem.disk();
         int actualFileSize = 0;
@@ -72,24 +76,18 @@ public class FileSystemTest {
     public void DoesNotAllocateSpaceForFileOfSizeZero() throws OutOfSpaceException, BadFileNameException {
         fileSystem.file(validPath, 0);
         String[][] disk = fileSystem.disk();
-        String[] file = null;
-        for (String[] block : disk) {
-            if (block != null) {
-                file = block;
-                break;
-            }
-        }
-        assertNull(file);
+        String[][] expectedDisk = new String[diskSize][];
+        assertArrayEquals(expectedDisk, disk);
     }
 
     @Test()
     public void fileIsAlmostTooBig() throws OutOfSpaceException, BadFileNameException {
-        fileSystem.file(validPath, diskSpace);
+        fileSystem.file(validPath, diskSize);
     }
 
     @Test(expected = OutOfSpaceException.class)
     public void fileIsTooBig() throws OutOfSpaceException, BadFileNameException {
-        fileSystem.file(validPath, diskSpace+1);
+        fileSystem.file(validPath, diskSize +1);
     }
 
     @Test
@@ -117,6 +115,9 @@ public class FileSystemTest {
         fileSystem.file(validPath, 1);
     }
 
+    /**
+     * get the number of blocks in disk that are allocated to some file
+     */
     private int blocksWithFile() {
         int blocksWithFile = 0;
         String[][] disk = fileSystem.disk();
@@ -127,6 +128,11 @@ public class FileSystemTest {
         return blocksWithFile;
     }
 
+    /**
+     * allocate two files with the same path (function made to avoid code redundancy)
+     * @param size1 of file1
+     * @param size2 of file2
+     */
     private void makeTwoFilesWithSameName(int size1, int size2) throws OutOfSpaceException, BadFileNameException {
         fileSystem.file(validPath, size1);
         fileSystem.file(validPath, size2);
@@ -140,37 +146,16 @@ public class FileSystemTest {
 
     @Test
     public void makeBiggestFilePossibleButFileAlreadyExists() throws BadFileNameException, OutOfSpaceException {
-        makeTwoFilesWithSameName(2, diskSpace);
-        assertEquals(diskSpace, blocksWithFile());
+        makeTwoFilesWithSameName(2, diskSize);
+        assertEquals(diskSize, blocksWithFile());
     }
-
-//    @Test
-//    public void checkDeallocationHappensWhenReplacingFile() throws OutOfSpaceException, BadFileNameException {
-//        int fileSize1 = 8;
-//        int fileSize2 = 2;
-//        int fileSize3 = 9;
-//        fileSystem.file(longFilePath, fileSize1);
-//        int free = FileSystem.fileStorage.countFreeSpace();
-//        String[][] disk = fileSystem.disk();
-//        fileSystem.file(validPath, fileSize2);
-//        free = FileSystem.fileStorage.countFreeSpace();
-//        disk = fileSystem.disk();
-//        fileSystem.rmfile(longFilePath);
-//        free = FileSystem.fileStorage.countFreeSpace();
-//        disk = fileSystem.disk();
-//        fileSystem.file(validPath, fileSize3);
-//        free = FileSystem.fileStorage.countFreeSpace();
-//        disk = fileSystem.disk();
-//        int x = blocksWithFile();
-//        free = FileSystem.fileStorage.countFreeSpace();
-//    }
 
     @Test
     public void makeTooBigFileButFileAlreadyExists() throws BadFileNameException, OutOfSpaceException {
         fileSystem.file(validPath, 2);
         String[][] disk = fileSystem.disk();
         try {
-            fileSystem.file(validPath, diskSpace+1);
+            fileSystem.file(validPath, diskSize +1);
             fail("allocated a file that is bigger than disk");
         }
         catch (OutOfSpaceException e) {
@@ -221,14 +206,8 @@ public class FileSystemTest {
         fileSystem.file(validPath, 1);
         fileSystem.rmfile(validPath);
         String[][] disk = fileSystem.disk();
-        String[] file = null;
-        for (String[] block : disk) {
-            if (block != null) {
-                file = block;
-                break;
-            }
-        }
-        assertNull(file);
+        String[][] expectedDisk = new String[diskSize][];
+        assertArrayEquals(expectedDisk, disk);
     }
 
     // test method: rmdir()
@@ -243,14 +222,8 @@ public class FileSystemTest {
         fileSystem.dir(longDirPath);
         fileSystem.rmdir(longDirPath);
         String[][] disk = fileSystem.disk();
-        String[] file = null;
-        for (String[] block : disk) {
-            if (block != null) {
-                file = block;
-                break;
-            }
-        }
-        assertNull(file);
+        String[][] expectedDisk = new String[diskSize][];
+        assertArrayEquals(expectedDisk, disk);
     }
 
     @Test(expected = DirectoryNotEmptyException.class)
@@ -262,7 +235,7 @@ public class FileSystemTest {
     // test method: FileExists()
 
     @Test
-    public void fileExists() throws BadFileNameException, OutOfSpaceException {
+    public void checkFileExists() throws BadFileNameException, OutOfSpaceException {
         fileSystem.file(validPath, 1);
         Leaf file = fileSystem.FileExists(validPath);
         String expectedName = validPath[validPath.length-1];
@@ -272,7 +245,7 @@ public class FileSystemTest {
     // test method: DirExists()
 
     @Test
-    public void dirExists() throws BadFileNameException, OutOfSpaceException {
+    public void checkDirExists() throws BadFileNameException, OutOfSpaceException {
         fileSystem.dir(longDirPath);
         Tree dir = fileSystem.DirExists(longDirPath);
         String expectedName = longDirPath[longDirPath.length-1];

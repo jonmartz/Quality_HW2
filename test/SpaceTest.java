@@ -80,24 +80,18 @@ public class SpaceTest {
         int fileSize = 1;
         Leaf leaf = new Leaf("name", fileSize);
         space.Alloc(fileSize, leaf);
-        assertEquals(space.countFreeSpace(), spaceSize -fileSize);
+        assertEquals(space.countFreeSpace(), spaceSize - fileSize);
     }
 
     @Test
     public void checkGetAlloc() throws OutOfSpaceException {
         // check that all blocks are null at the beginning
-        Leaf leaf = null;
-        for (Leaf block : space.getAlloc()) {
-            if (block != null) {
-                leaf = block;
-                break;
-            }
-        }
-        assertNull(leaf);
+        Leaf[] blocks = space.getAlloc();
+        assertArrayEquals(new String[spaceSize][], blocks);
 
         // check after allocation
         int fileSize = 1;
-        leaf = new Leaf("name", fileSize);
+        Leaf leaf = new Leaf("name", fileSize);
         space.Alloc(fileSize, leaf);
         Leaf[] expectedBlocks = new Leaf[spaceSize];
         expectedBlocks[0] = leaf;
