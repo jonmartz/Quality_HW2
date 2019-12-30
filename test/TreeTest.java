@@ -53,6 +53,10 @@ public class TreeTest {
     //Test for getChildByName when Child don't exists:
     public void checkNotExistGetChildByName()
     {
+        Tree childTree1;
+        Tree childTree2;
+        Node childNode;
+        String childName;
         String treeName = "nameOfTree";
         List<Tree> childrenToCheck = new ArrayList<>();
         int childrenCount = randomNum.nextInt(highest);;
@@ -61,18 +65,16 @@ public class TreeTest {
         for(int i = 0 ; i < childrenCount ; i++){
             childrenNameToCheck.add(treeName + i);
         }
-        for(int j = 0; j < childrenNameToCheck.size() ; j++){
-            String cName = childrenNameToCheck.get(j);
-            assertNull(tree.children.get(cName));
-            Tree childTree = tree.GetChildByName(cName);
-            assertEquals(childTree.depth,tree.depth+1);
-            assertEquals(tree.children.get(cName),childTree);
-            childrenToCheck.add(childTree);
-        }
-        for(int k = 0 ; k < childrenToCheck.size() ; k++){
-            Tree childTree = childrenToCheck.get(k);
-            Node childNode = tree.GetChildByName(childTree.name);
-            assertEquals(childTree,childNode);
+        for(int j=0 ; j < childrenNameToCheck.size() ; j++){
+            childName = childrenNameToCheck.get(j);
+            assertTrue(tree.children.get(childName) == null);
+            childTree1 = tree.GetChildByName(childName);
+            assertEquals(childTree1.depth,tree.depth+1);
+            assertEquals(tree.children.get(childName),childTree1);
+            childrenToCheck.add(childTree1);
+            childTree2 = childrenToCheck.get(j);
+            childNode = tree.GetChildByName(childTree2.name);
+            assertEquals(childTree2,childNode);
         }
         FileSystem.fileStorage = null;
     }
