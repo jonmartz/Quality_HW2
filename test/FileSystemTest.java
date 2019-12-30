@@ -54,15 +54,16 @@ public class FileSystemTest {
         }
         assertNull(file);
 
-        fileSystem.file(validPath, 1);
+        int expectedFileSize = diskSpace-1;
+        fileSystem.file(validPath, expectedFileSize);
         disk = fileSystem.disk();
+        int actualFileSize = 0;
         for (String[] block : disk) {
-            if (block != null) {
-                file = block;
-                break;
+            if (block != null && Arrays.equals(block, validPath)) {
+                actualFileSize++;
             }
         }
-        assertArrayEquals(validPath, file);
+        assertEquals(expectedFileSize, actualFileSize);
     }
 
     // test method: file()
@@ -83,7 +84,6 @@ public class FileSystemTest {
 
     @Test()
     public void fileIsAlmostTooBig() throws OutOfSpaceException, BadFileNameException {
-        fileSystem.file(validPath, diskSpace-1);
         fileSystem.file(validPath, diskSpace);
     }
 
@@ -117,28 +117,65 @@ public class FileSystemTest {
         fileSystem.file(validPath, 1);
     }
 
-    @Test
-    public void makeNotTooBigFileButFileAlreadyExists() throws BadFileNameException, OutOfSpaceException {
-        fileSystem.file(validPath, 1);
-        fileSystem.file(validPath, 2);
+    private int blocksWithFile() {
         int blocksWithFile = 0;
         String[][] disk = fileSystem.disk();
         for (String[] block : disk) {
             if (block != null)
                 blocksWithFile++;
         }
-        assertEquals(2, blocksWithFile);
+        return blocksWithFile;
+    }
+
+    private void makeTwoFilesWithSameName(int size1, int size2) throws OutOfSpaceException, BadFileNameException {
+        fileSystem.file(validPath, size1);
+        fileSystem.file(validPath, size2);
     }
 
     @Test
+    public void makeNotTooBigFileButFileAlreadyExists() throws BadFileNameException, OutOfSpaceException {
+        makeTwoFilesWithSameName(2, 3);
+        assertEquals(3, blocksWithFile());
+    }
+
+    @Test
+    public void makeBiggestFilePossibleButFileAlreadyExists() throws BadFileNameException, OutOfSpaceException {
+        makeTwoFilesWithSameName(2, diskSpace);
+        assertEquals(diskSpace, blocksWithFile());
+    }
+
+//    @Test
+//    public void checkDeallocationHappensWhenReplacingFile() throws OutOfSpaceException, BadFileNameException {
+//        int fileSize1 = 8;
+//        int fileSize2 = 2;
+//        int fileSize3 = 9;
+//        fileSystem.file(longFilePath, fileSize1);
+//        int free = FileSystem.fileStorage.countFreeSpace();
+//        String[][] disk = fileSystem.disk();
+//        fileSystem.file(validPath, fileSize2);
+//        free = FileSystem.fileStorage.countFreeSpace();
+//        disk = fileSystem.disk();
+//        fileSystem.rmfile(longFilePath);
+//        free = FileSystem.fileStorage.countFreeSpace();
+//        disk = fileSystem.disk();
+//        fileSystem.file(validPath, fileSize3);
+//        free = FileSystem.fileStorage.countFreeSpace();
+//        disk = fileSystem.disk();
+//        int x = blocksWithFile();
+//        free = FileSystem.fileStorage.countFreeSpace();
+//    }
+
+    @Test
     public void makeTooBigFileButFileAlreadyExists() throws BadFileNameException, OutOfSpaceException {
-        fileSystem.file(validPath, 1);
+        fileSystem.file(validPath, 2);
+        String[][] disk = fileSystem.disk();
         try {
             fileSystem.file(validPath, diskSpace+1);
+            fail("allocated a file that is bigger than disk");
         }
         catch (OutOfSpaceException e) {
             String[] file = null;
-            String[][] disk = fileSystem.disk();
+            disk = fileSystem.disk();
             for (String[] block : disk) {
                 if (block != null) {
                     file = block;
@@ -147,7 +184,6 @@ public class FileSystemTest {
             }
             assertArrayEquals(validPath, file);
         }
-        fail("allocated a file that is bigger than disk");
     }
 
     // test method: lsdir()

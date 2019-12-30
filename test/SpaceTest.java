@@ -59,9 +59,16 @@ public class SpaceTest {
     }
 
     @Test
-    public void checkDealloc() throws OutOfSpaceException {
+    public void checkDealloc() throws OutOfSpaceException, BadFileNameException {
+
+        // correctly allocate the leaf
+        FileSystem fileSystem = new FileSystem(spaceSize);
         int fileSize = 1;
-        Leaf leaf = new Leaf("name", fileSize);
+        String[] path = {"root", "fileName"};
+        fileSystem.file(path, 1);
+
+        // deallocate
+        Leaf leaf = fileSystem.FileExists(path);
         space.Alloc(fileSize, leaf);
         space.Dealloc(leaf);
         assertEquals(space.countFreeSpace(), spaceSize);

@@ -34,7 +34,8 @@ public class LeafTest {
     @Test(expected = OutOfSpaceException.class)
     //Test for checking invalid creation
     public void checkInvalidCreation() throws OutOfSpaceException {
-        Leaf leaf = new Leaf("nameOfLeaf",size*2);
+        Leaf leaf = new Leaf("nameOfLeaf",size + 10);
+        int x = 5;
     }
 
     @Test

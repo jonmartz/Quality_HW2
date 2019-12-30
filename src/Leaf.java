@@ -21,9 +21,8 @@ public class Leaf extends Node {
     public Leaf(String name, int size) throws OutOfSpaceException {
 
         this.name = name;
-
+        this.size = size;
         allocateSpace(size);
-
     }
 
     private void allocateSpace(int size) throws OutOfSpaceException {

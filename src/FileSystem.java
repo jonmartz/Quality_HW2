@@ -95,11 +95,11 @@ public class FileSystem {
      *
      * @param name String array, each element of which is an element in the path to file.
      * Must start with root. Any nonexistent directories along the path will be created.
-     * @param k Size of file to create, in KB.
+     * @param newFileSize Size of file to create, in KB.
      * @throws BadFileNameException First directory is not root.
      * @throws OutOfSpaceException Adding child failed; not enough free space.
      */
-    public void file(String[] name, int k) throws BadFileNameException, OutOfSpaceException {
+    public void file(String[] name, int newFileSize) throws BadFileNameException, OutOfSpaceException {
 
         Tree workingTree = fileSystemTree;
         String fileName = name[name.length - 1];
@@ -109,21 +109,21 @@ public class FileSystem {
             throw new BadFileNameException();
 
         }
+        int freeSpace = FileSystem.fileStorage.countFreeSpace();
+        if (newFileSize > freeSpace) { //not enough space free
 
-        if (k > FileSystem.fileStorage.countFreeSpace()) { //not enough space free
+            Leaf existingFile = FileExists(name);
 
-            Leaf file = FileExists(name);
-
-            if (file == null) {
+            if (existingFile == null) {
 
                 throw new OutOfSpaceException();
 
-            } else if (k <= (FileSystem.fileStorage.countFreeSpace() - file.allocations.length)) { //if there will be enough space free after deleting the old file, do it
+            } else if (newFileSize <= (FileSystem.fileStorage.countFreeSpace() + existingFile.allocations.length)) { //if there will be enough space free after deleting the old file, do it
 
                 rmfile(name);
 
-            }
-
+            } else
+                throw new OutOfSpaceException();
         }
 
         //loop until level containing file
@@ -136,7 +136,7 @@ public class FileSystem {
         //will now be at same level as file, contained in workingTree
         if (workingTree.children.containsKey(fileName)) { //file exists, remove (reached this point, so file can fit)
 
-            if (workingTree.children.get(fileName).getClass().getName() == "system.Tree") { //name of existing directory
+            if (workingTree.children.get(fileName) instanceof Tree) { //name of existing directory
 
                 throw new BadFileNameException();
 
@@ -147,7 +147,7 @@ public class FileSystem {
 
         }
 
-        Leaf newLeaf = new Leaf(fileName, k);
+        Leaf newLeaf = new Leaf(fileName, newFileSize);
         newLeaf.parent = workingTree;
         newLeaf.depth = newLeaf.parent.depth + 1;
 
@@ -257,7 +257,7 @@ public class FileSystem {
 
         Node found = PathExists(name);
 
-        if (found == null || found.getClass().getName() == "system.Node") {
+        if (found == null || found instanceof Tree) {
 
             return null;
 
