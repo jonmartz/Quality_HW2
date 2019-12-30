@@ -1,19 +1,22 @@
-import org.junit.*;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.junit.*;
 import static org.junit.Assert.*;
 
 public class TreeTest {
-    private Random randomNum;
-    private final int highest = 101;
 
-    @Before
-    public void beforeTests() {
+    private static Random randomNum;
+    private final int highest = 5;
+
+    @BeforeClass
+    public static void beforeClass() {
         randomNum = new Random();
+    }
+    @After
+    public void after() {
+        FileSystem.fileStorage = null;
     }
 
     @Test
@@ -106,12 +109,6 @@ public class TreeTest {
         for (int j = 0; j < forest.size(); j++) {
             assertEquals(forest.get(j).name, treePath[j]);
         }
-        FileSystem.fileStorage = null;
-    }
-
-    @After
-    public void clear()
-    {
         FileSystem.fileStorage = null;
     }
 }
